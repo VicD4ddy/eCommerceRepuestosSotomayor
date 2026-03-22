@@ -13,8 +13,9 @@ const CategoriesSection = async () => {
           {categories?.map((cat) => {
             const IconComponent = (LucideIcons as any)[cat.icon] || LucideIcons.HelpCircle;
             return (
-              <button
+              <a
                 key={cat.id}
+                href={`/catalogo?q=${encodeURIComponent(cat.name)}`}
                 className="group flex flex-col items-center gap-2 rounded-lg border-2 border-border bg-card p-4 transition-all hover:border-primary hover:shadow-md md:gap-3 md:p-6"
               >
                 <div className="scale-75 text-muted-foreground transition-colors group-hover:text-primary md:scale-100">
@@ -23,7 +24,7 @@ const CategoriesSection = async () => {
                 <span className="font-display text-[10px] font-bold uppercase tracking-wide text-foreground md:text-xs">
                   {cat.name}
                 </span>
-              </button>
+              </a>
             );
           })}
         </div>

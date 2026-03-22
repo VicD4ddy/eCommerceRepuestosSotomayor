@@ -44,8 +44,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent className="flex w-full flex-col sm:max-w-lg">
-        <SheetHeader className="space-y-2.5 pr-6">
+      <SheetContent className="flex w-full flex-col sm:max-w-lg overflow-hidden">
+        <SheetHeader className="space-y-2.5">
           <SheetTitle>Tu Carrito ({getCartItemsCount()})</SheetTitle>
           <SheetDescription>
             Revisa los artículos que has añadido antes de proceder al pago.
@@ -53,7 +53,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
           <Separator />
         </SheetHeader>
         
-        <div className="flex-1 overflow-y-auto pr-6">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center space-y-2">
               <ShoppingCart className="h-12 w-12 text-muted-foreground" aria-hidden="true" />
@@ -65,6 +65,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 <div key={item.product.id} className="flex space-x-4">
                   <div className="relative aspect-square h-16 w-16 min-w-fit overflow-hidden rounded">
                     <img
+                    onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }}
                       src={item.product.image}
                       alt={item.product.name}
                       className="absolute object-cover"
@@ -134,7 +135,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
           )}
         </div>
         
-        <div className="space-y-4 pr-6">
+        <div className="space-y-4">
           <Separator />
           <Separator />
           <div className="space-y-3 text-sm">
@@ -144,8 +145,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex justify-between items-start bg-primary/10 p-2 rounded-md border border-primary/20">
                <div className="flex flex-col">
-                  <span className="font-bold text-primary">Total Tasa BCV (x1.6)</span>
-                  <span className="text-xs text-muted-foreground mt-0.5">Si pagas por transferencia.</span>
+                  <span className="font-bold text-primary">Total Tasa BCV</span>
+                   <span className="text-xs text-muted-foreground mt-0.5">Si pagas por punto de venta o pago móvil.</span>
                </div>
                <div className="text-right">
                  <span className="font-black text-lg text-primary">$ {getSubtotalBcvUsd().toFixed(2)}</span>

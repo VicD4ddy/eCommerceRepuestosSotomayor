@@ -114,12 +114,12 @@ export default function ProductView({ product }: ProductViewProps) {
              {/* Main BCV price */}
              <div className="flex flex-col mb-5 gap-1">
                 <span className="font-display text-4xl font-black tracking-tight text-primary">
-                  ${(product.price * 1.6).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                  ${(product.price * 1.6).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
                 <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Precio Tasa BCV</span>
                 {bcvRate && (
                   <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider mt-2 bg-muted w-fit px-3 py-1.5 rounded-md">
-                    Ref. Bs: {(product.price * 1.6 * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                    Ref. Bs: {(product.price * 1.6 * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 )}
              </div>
@@ -131,7 +131,7 @@ export default function ProductView({ product }: ProductViewProps) {
                  <p className="text-sm font-black uppercase tracking-wider text-green-700 dark:text-green-400">¡Descuento pagando en Divisas!</p>
                  <p className="text-sm text-muted-foreground mt-1">Paga en USDT, Zelle o $ efectivo y obtén este repuesto por solo:</p>
                  <p className="mt-2 font-display text-3xl font-black text-green-600 dark:text-green-500">
-                   ${product.price.toLocaleString("es-VE", { minimumFractionDigits: 2 })} <span className="text-base font-bold opacity-70">USD</span>
+                   ${product.price.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-base font-bold opacity-70">USD</span>
                  </p>
                </div>
              </div>

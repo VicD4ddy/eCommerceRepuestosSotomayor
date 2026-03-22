@@ -22,7 +22,7 @@ const Header = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}#productos`);
+      router.push(`/catalogo?q=${encodeURIComponent(searchQuery.trim())}`);
       setMobileMenuOpen(false);
     }
   };
@@ -43,8 +43,8 @@ const Header = () => {
           />
         </a>
 
-        {/* Search Bar - Desktop: always visible */}
-        <form onSubmit={handleSearch} className="relative flex flex-1 max-w-2xl">
+        {/* Search Bar - Desktop only */}
+        <form onSubmit={handleSearch} className="relative hidden md:flex flex-1 max-w-2xl">
           <input
             type="text"
             value={searchQuery}
@@ -69,21 +69,23 @@ const Header = () => {
               <div className="flex items-center gap-1 rounded-full border border-surface-dark-foreground/10 bg-surface-dark-foreground/5 px-2 py-1 text-[10px] sm:px-3 sm:text-xs font-semibold text-surface-dark-foreground/80">
                 <span className="text-primary font-bold hidden sm:inline">Tasa BCV:</span>
                 <span className="text-primary font-bold sm:hidden">BCV:</span>
-                <span>Bs. {bcvRate.toLocaleString("es-VE", { minimumFractionDigits: 2 })}</span>
+                <span>Bs. {bcvRate.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             ) : null
           )}
 
-          <CartSheet>
-            <button className="relative text-surface-dark-foreground transition-colors hover:text-primary">
-              <ShoppingCart size={24} />
-              {isMounted && cartCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </CartSheet>
+          <div className="hidden md:block">
+            <CartSheet>
+              <button className="relative text-surface-dark-foreground transition-colors hover:text-primary">
+                <ShoppingCart size={24} />
+                {isMounted && cartCount > 0 && (
+                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </CartSheet>
+          </div>
           <button
             className="text-surface-dark-foreground md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -109,9 +111,8 @@ const Header = () => {
             </button>
           </form>
           <nav className="mt-4 flex flex-col gap-1.5 font-display text-sm font-bold uppercase text-surface-dark-foreground">
-            <a href="#" className="py-2 transition-colors hover:text-primary">Inicio</a>
-            <a href="#categorias" className="py-2 transition-colors hover:text-primary">Categorías</a>
-            <a href="#productos" className="py-2 transition-colors hover:text-primary">Productos</a>
+            <a href="/" className="py-2 transition-colors hover:text-primary">Inicio</a>
+            <a href="/catalogo" className="py-2 transition-colors hover:text-primary">Catálogo</a>
             <a href="#contacto" className="py-2 transition-colors hover:text-primary">Contacto</a>
           </nav>
         </div>

@@ -72,7 +72,7 @@ const ProductCard = ({ id, category, name, price, image, image2, description, br
           <div className="mt-auto flex items-end justify-between pt-3">
             <div className="flex flex-col gap-0.5">
               <span className="font-display text-lg font-black tracking-tight text-primary md:text-xl">
-                ${(price * 1.6).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                ${(price * 1.6).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold">Precio Tasa BCV</span>
             </div>
@@ -147,12 +147,12 @@ const ProductCard = ({ id, category, name, price, image, image2, description, br
                  {/* Main BCV price */}
                  <div className="flex flex-col mb-4 gap-1">
                     <span className="font-display text-3xl font-black tracking-tight text-primary flex items-center">
-                      ${(price * 1.6).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                      ${(price * 1.6).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Precio Tasa BCV</span>
                     {bcvRate && (
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1 bg-muted w-fit px-2 py-1 rounded">
-                        Ref. Bs: {(price * 1.6 * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                        Ref. Bs: {(price * 1.6 * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     )}
                  </div>
@@ -164,7 +164,7 @@ const ProductCard = ({ id, category, name, price, image, image2, description, br
                      <p className="text-xs font-black uppercase tracking-wider text-green-700 dark:text-green-400">¡Descuento pagando en Divisas!</p>
                      <p className="text-xs text-muted-foreground mt-0.5">Paga en USDT, Zelle o $ efectivo y obtén este repuesto por:</p>
                      <p className="mt-1 font-display text-xl font-black text-green-600 dark:text-green-500">
-                       ${price.toLocaleString("es-VE", { minimumFractionDigits: 2 })} <span className="text-sm font-bold opacity-70">USD</span>
+                       ${price.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-sm font-bold opacity-70">USD</span>
                      </p>
                    </div>
                  </div>

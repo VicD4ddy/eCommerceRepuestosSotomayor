@@ -12,7 +12,7 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center">
         <a
-          href="#productos"
+          href="/catalogo"
           className="inline-block w-auto rounded-full bg-primary px-8 py-3.5 font-display text-sm font-bold uppercase tracking-wide text-primary-foreground shadow-lg transition-all hover:scale-105 hover:bg-primary/90 md:px-10 md:py-4 md:text-base"
         >
           Ver Catálogo Completo

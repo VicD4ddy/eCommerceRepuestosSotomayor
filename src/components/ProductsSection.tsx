@@ -1,6 +1,6 @@
 import ProductCard from "./ProductCard";
 import { supabase } from "@/lib/supabase/client";
-import { SearchX, ChevronLeft, ChevronRight } from "lucide-react";
+import { SearchX, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import NextLink from "next/link";
 
 const ProductsSection = async ({ searchQuery = "", page = 1 }: { searchQuery?: string, page?: number }) => {
@@ -47,6 +47,20 @@ const ProductsSection = async ({ searchQuery = "", page = 1 }: { searchQuery?: s
             Productos <span className="text-primary">Destacados</span>
           </h2>
         )}
+
+        {/* Mobile search bar — only visible below md */}
+        <form method="GET" action="/catalogo" className="relative mt-4 md:hidden">
+          <input
+            type="text"
+            name="q"
+            defaultValue={searchQuery}
+            placeholder="Buscar repuesto, marca o SKU..."
+            className="w-full rounded-lg bg-background border border-border py-2.5 pl-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-1 ring-border/50 transition-all focus:ring-2 focus:ring-primary"
+          />
+          <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md bg-primary p-2 text-primary-foreground">
+            <Search size={16} />
+          </button>
+        </form>
         {products && products.length > 0 ? (
           <>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4 md:mt-8">
