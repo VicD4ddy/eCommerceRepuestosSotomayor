@@ -32,9 +32,16 @@ const ProductsSection = async ({ searchQuery = "", page = 1 }: { searchQuery?: s
     <section id="productos" className="w-full max-w-[100vw] overflow-hidden bg-muted/50 py-10 md:py-16">
       <div className="container mx-auto px-4">
         {searchQuery ? (
-          <h2 className="font-display text-2xl font-black uppercase text-foreground md:text-3xl">
-            Resultados de Búsqueda: <span className="text-primary tracking-tight">"{searchQuery}"</span>
-          </h2>
+          <>
+            <h2 className="font-display text-2xl font-black uppercase text-foreground md:text-3xl">
+              Resultados: <span className="text-primary tracking-tight">"{searchQuery}"</span>
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {count === 0
+                ? "Ningún producto encontrado"
+                : `${count} producto${count !== 1 ? "s" : ""} encontrado${count !== 1 ? "s" : ""}`}
+            </p>
+          </>
         ) : (
           <h2 className="font-display text-2xl font-black uppercase italic tracking-tight text-foreground md:text-3xl">
             Productos <span className="text-primary">Destacados</span>

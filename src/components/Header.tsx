@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useBcvStore } from "@/lib/store/bcvStore";
 import { CartSheet } from "./CartSheet";
+import { Loader2 } from "lucide-react";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const cartCount = useCartStore((state) => state.getCartItemsCount());
   const bcvRate = useBcvStore((state) => state.rate);
+  const bcvLoading = useBcvStore((state) => state.loading);
   
   // Hydration guard for cart counter
   const [isMounted, setIsMounted] = useState(false);
@@ -41,8 +43,8 @@ const Header = () => {
           />
         </a>
 
-        {/* Search Bar - Desktop */}
-        <form onSubmit={handleSearch} className="relative hidden flex-1 max-w-2xl md:block">
+        {/* Search Bar - Desktop: always visible */}
+        <form onSubmit={handleSearch} className="relative flex flex-1 max-w-2xl">
           <input
             type="text"
             value={searchQuery}
@@ -57,12 +59,19 @@ const Header = () => {
 
         {/* Cart & Mobile Menu */}
         <div className="flex items-center gap-2 sm:gap-4 md:gap-5">
-          {isMounted && bcvRate && (
-            <div className="flex items-center gap-1 rounded-full border border-surface-dark-foreground/10 bg-surface-dark-foreground/5 px-2 py-1 text-[10px] sm:px-3 sm:text-xs font-semibold text-surface-dark-foreground/80">
-              <span className="text-primary font-bold hidden sm:inline">Tasa BCV:</span>
-              <span className="text-primary font-bold sm:hidden">BCV:</span>
-              <span>Bs. {bcvRate.toLocaleString("es-VE", { minimumFractionDigits: 2 })}</span>
-            </div>
+          {isMounted && (
+            bcvLoading ? (
+              <div className="flex items-center gap-1 rounded-full border border-surface-dark-foreground/10 bg-surface-dark-foreground/5 px-2 py-1">
+                <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                <span className="text-[10px] text-surface-dark-foreground/60 hidden sm:inline">Cargando BCV...</span>
+              </div>
+            ) : bcvRate ? (
+              <div className="flex items-center gap-1 rounded-full border border-surface-dark-foreground/10 bg-surface-dark-foreground/5 px-2 py-1 text-[10px] sm:px-3 sm:text-xs font-semibold text-surface-dark-foreground/80">
+                <span className="text-primary font-bold hidden sm:inline">Tasa BCV:</span>
+                <span className="text-primary font-bold sm:hidden">BCV:</span>
+                <span>Bs. {bcvRate.toLocaleString("es-VE", { minimumFractionDigits: 2 })}</span>
+              </div>
+            ) : null
           )}
 
           <CartSheet>

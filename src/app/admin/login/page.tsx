@@ -92,6 +92,11 @@ export default function AdminLoginPage() {
             {loading ? "Verificando..." : "Ingresar al Panel"}
           </Button>
         </form>
+        <div className="mt-6 text-center">
+          <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            ← Volver a la tienda
+          </a>
+        </div>
       </div>
     </div>
   );

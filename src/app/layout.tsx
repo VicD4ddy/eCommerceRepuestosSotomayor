@@ -2,8 +2,17 @@ import "@/index.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata = {
-  title: "Repuestos Sotomayor",
-  description: "Encuentra la pieza exacta para tu vehículo.",
+  title: "Repuestos Sotomayor | Repuestos y Autopartes en Venezuela",
+  description: "Catálogo de repuestos y autopartes para tu vehículo. Precios en efectivo y Tasa BCV. Pídenos por WhatsApp.",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "Repuestos Sotomayor",
+    description: "Repuestos y autopartes. Precios en USD Efectivo y Tasa BCV.",
+    locale: "es_VE",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
