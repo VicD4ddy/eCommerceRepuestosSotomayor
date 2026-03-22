@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import '@fontsource/montserrat/400.css';
 @import '@fontsource/montserrat/700.css';
 @import '@fontsource/montserrat/800.css';
@@ -12,6 +8,10 @@
 @import '@fontsource/roboto/400.css';
 @import '@fontsource/roboto/500.css';
 @import '@fontsource/roboto/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -24,7 +24,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 0 84% 50%;
+    --primary: 14 95% 53%;
     --primary-foreground: 0 0% 98%;
 
     --secondary: 45 97% 54%;
@@ -41,7 +41,7 @@
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 0 84% 50%;
+    --ring: 14 95% 53%;
 
     --radius: 0.5rem;
 

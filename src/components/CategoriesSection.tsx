@@ -1,42 +1,31 @@
-import { Cog, CircleDot, Car, Disc3, GitFork, Wrench } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import * as LucideIcons from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 
-interface Category {
-  name: string;
-  icon: LucideIcon;
-}
-
-const categories: Category[] = [
-  { name: "Motor", icon: Cog },
-  { name: "Tren Delantero", icon: Car },
-  { name: "Suspensión", icon: GitFork },
-  { name: "Frenos", icon: Disc3 },
-  { name: "Transmisión", icon: CircleDot },
-  { name: "Accesorios", icon: Wrench },
-];
-
-const CategoriesSection = () => {
+const CategoriesSection = async () => {
+  const { data: categories } = await supabase.from("categories").select("*").order("name");
   return (
-    <section id="categorias" className="py-16">
-      <div className="container mx-auto">
+    <section id="categorias" className="w-full max-w-[100vw] overflow-hidden py-16">
+      <div className="container mx-auto px-4">
         <h2 className="font-display text-2xl font-black uppercase italic tracking-tight text-foreground md:text-3xl">
           Categorías <span className="text-primary">Destacadas</span>
         </h2>
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {categories.map((cat) => (
-            <button
-              key={cat.name}
-              className="group flex flex-col items-center gap-3 rounded-lg border-2 border-border bg-card p-6 transition-all hover:border-primary hover:shadow-md"
-            >
-              <cat.icon
-                size={36}
-                className="text-muted-foreground transition-colors group-hover:text-primary"
-              />
-              <span className="font-display text-xs font-bold uppercase tracking-wide text-foreground">
-                {cat.name}
-              </span>
-            </button>
-          ))}
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+          {categories?.map((cat) => {
+            const IconComponent = (LucideIcons as any)[cat.icon] || LucideIcons.HelpCircle;
+            return (
+              <button
+                key={cat.id}
+                className="group flex flex-col items-center gap-2 rounded-lg border-2 border-border bg-card p-4 transition-all hover:border-primary hover:shadow-md md:gap-3 md:p-6"
+              >
+                <div className="scale-75 text-muted-foreground transition-colors group-hover:text-primary md:scale-100">
+                  <IconComponent size={36} />
+                </div>
+                <span className="font-display text-[10px] font-bold uppercase tracking-wide text-foreground md:text-xs">
+                  {cat.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>

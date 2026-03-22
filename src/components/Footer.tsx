@@ -2,30 +2,40 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer id="contacto" className="bg-surface-dark py-12 text-surface-dark-foreground">
-      <div className="container mx-auto">
-        <div className="grid gap-8 md:grid-cols-3">
+    <footer id="contacto" className="w-full max-w-[100vw] overflow-hidden bg-surface-dark py-8 text-surface-dark-foreground md:py-12">
+      <div className="container mx-auto px-4">
+        <div className="grid gap-6 md:grid-cols-3 md:gap-8">
           {/* Contact */}
           <div>
-            <h3 className="font-display text-lg font-black uppercase italic text-primary">
-              Repuestos Sotomayor
-            </h3>
+            <div className="mb-4">
+              <img 
+                src="/RepuestosSMsinfondo.png" 
+                alt="Repuestos Sotomayor" 
+                className="h-10 w-auto object-contain"
+              />
+            </div>
             <ul className="mt-4 space-y-3 font-body text-sm text-surface-dark-foreground/70">
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="mt-0.5 flex-shrink-0 text-primary" />
                 Valencia, Estado Carabobo, Venezuela
               </li>
-              <li className="flex items-center gap-2">
-                <Phone size={16} className="flex-shrink-0 text-primary" />
-                +58 241-XXX-XXXX
+              <li className="flex items-start gap-2">
+                <Phone size={16} className="mt-0.5 flex-shrink-0 text-primary" />
+                <div className="flex flex-col">
+                  <span>0412-423-6129</span>
+                  <span>0414-441-6287</span>
+                </div>
               </li>
-              <li className="flex items-center gap-2">
+              <li className="flex items-center gap-2 text-wrap break-all">
                 <Mail size={16} className="flex-shrink-0 text-primary" />
-                info@repuestossotomayor.com
+                repuestosotomayorca@gmail.com
               </li>
-              <li className="flex items-center gap-2">
-                <Clock size={16} className="flex-shrink-0 text-primary" />
-                Lun - Sáb: 8:00 AM - 5:00 PM
+              <li className="flex items-start gap-2">
+                <Clock size={16} className="mt-0.5 flex-shrink-0 text-primary" />
+                <div className="flex flex-col">
+                  <span>Lunes a Viernes: 8:30 AM - 4:30 PM</span>
+                  <span>Sábados: 8:30 AM - 2:00 PM</span>
+                </div>
               </li>
             </ul>
           </div>
@@ -63,7 +73,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-surface-dark-foreground/10 pt-6 text-center font-body text-xs text-surface-dark-foreground/50">
+        <div className="mt-8 border-t border-surface-dark-foreground/10 pt-6 text-center font-body text-xs text-surface-dark-foreground/50 md:mt-10">
           © {new Date().getFullYear()} Repuestos Sotomayor. Todos los derechos reservados.
         </div>
       </div>
