@@ -1,12 +1,12 @@
 "use client";
 
-import { Search, ShoppingCart, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useBcvStore } from "@/lib/store/bcvStore";
 import { CartSheet } from "./CartSheet";
 import { Loader2 } from "lucide-react";
+import SmartSearchBar from "./SmartSearchBar";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -16,23 +16,13 @@ const Header = () => {
   
   // Hydration guard for cart counter
   const [isMounted, setIsMounted] = useState(false);
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/catalogo?q=${encodeURIComponent(searchQuery.trim())}`);
-      setMobileMenuOpen(false);
-    }
-  };
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full max-w-[100vw] overflow-hidden bg-surface-dark shadow-lg">
+    <header className="sticky top-0 z-50 w-full max-w-[100vw] overflow-visible bg-surface-dark shadow-lg">
       <div className="container mx-auto flex max-w-full items-center justify-between gap-4 px-4 py-2 md:py-3">
         {/* Logo */}
         <a href="/" className="flex flex-shrink-0 items-center justify-center">
@@ -43,19 +33,10 @@ const Header = () => {
           />
         </a>
 
-        {/* Search Bar - Desktop only */}
-        <form onSubmit={handleSearch} className="relative hidden md:flex flex-1 max-w-2xl">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar repuesto, marca o SKU..."
-            className="w-full rounded-md bg-surface-dark-foreground/10 py-2.5 pl-4 pr-12 font-body text-sm text-surface-dark-foreground placeholder:text-surface-dark-foreground/50 outline-none ring-1 ring-surface-dark-foreground/20 transition-all focus:ring-2 focus:ring-primary"
-          />
-          <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md bg-primary p-2 text-primary-foreground transition-colors hover:bg-primary/90">
-            <Search size={18} />
-          </button>
-        </form>
+        {/* Smart Search Bar - Desktop only */}
+        <div className="relative hidden md:flex flex-1 max-w-2xl">
+          <SmartSearchBar variant="desktop" />
+        </div>
 
         {/* Cart & Mobile Menu */}
         <div className="flex items-center gap-2 sm:gap-4 md:gap-5">
@@ -95,21 +76,15 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Search */}
+      {/* Mobile Menu & Search */}
       {mobileMenuOpen && (
         <div className="border-t border-surface-dark-foreground/10 px-4 pb-4 md:hidden">
-          <form onSubmit={handleSearch} className="relative mt-3">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar repuesto, marca o SKU..."
-              className="w-full rounded-md bg-surface-dark-foreground/10 py-2.5 pl-4 pr-12 font-body text-sm text-surface-dark-foreground placeholder:text-surface-dark-foreground/50 outline-none ring-1 ring-surface-dark-foreground/20 focus:ring-2 focus:ring-primary"
+          <div className="relative mt-3">
+            <SmartSearchBar
+              variant="mobile"
+              onNavigate={() => setMobileMenuOpen(false)}
             />
-            <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md bg-primary p-2 text-primary-foreground">
-              <Search size={18} />
-            </button>
-          </form>
+          </div>
           <nav className="mt-4 flex flex-col gap-1.5 font-display text-sm font-bold uppercase text-surface-dark-foreground">
             <a href="/" className="py-2 transition-colors hover:text-primary">Inicio</a>
             <a href="/catalogo" className="py-2 transition-colors hover:text-primary">Catálogo</a>

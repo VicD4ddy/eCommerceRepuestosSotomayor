@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Zap } from "lucide-react";
+import { X } from "lucide-react";
 
 export default function DiscountBanner() {
   const [visible, setVisible] = useState(false);
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    // Slight delay so it feels like a smooth welcome
+    // Show after a slight delay
     const showTimer = setTimeout(() => setVisible(true), 600);
-    // Auto-dismiss after 5s
-    const hideTimer = setTimeout(() => dismiss(), 5800);
+    // Auto-dismiss after 6s
+    const hideTimer = setTimeout(() => dismiss(), 6000);
     return () => {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
@@ -34,37 +34,32 @@ export default function DiscountBanner() {
       }`}
       style={{ animation: exiting ? undefined : "slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }}
     >
-      <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl border border-green-500/30 bg-gradient-to-r from-green-950 via-green-900 to-emerald-900 px-5 py-4 shadow-2xl shadow-green-900/40">
-        {/* Glow effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-emerald-500/10 to-green-500/5 animate-pulse" />
-
-        {/* Icon */}
-        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500/20 ring-1 ring-green-500/30">
-          <Zap className="h-5 w-5 text-green-400" fill="currentColor" />
+      <div className="relative overflow-hidden rounded-[20px] bg-[#1a1c1e] px-6 py-6 shadow-2xl border border-white/5">
+        
+        {/* Superior Row: Badge + Close Btn */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="bg-[#4ade80]/20 text-[#4ade80] px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">
+            ¡Oferta Especial!
+          </div>
+          <button
+            onClick={dismiss}
+            className="text-slate-400 transition-colors hover:text-white"
+            aria-label="Cerrar"
+          >
+            <X className="h-6 w-6 stroke-[1.5]" />
+          </button>
         </div>
 
         {/* Text */}
-        <div className="relative flex-1 min-w-0">
-          <p className="text-[11px] font-black uppercase tracking-[0.15em] text-green-400">
-            ¡Oferta Especial!
-          </p>
-          <p className="mt-0.5 font-display text-sm font-bold leading-snug text-white sm:text-base">
+        <div className="pr-2">
+          <h2 className="font-display text-[28px] font-bold leading-[1.15] text-white tracking-tight">
             Todos nuestros productos tienen{" "}
-            <span className="text-green-400">descuentos hasta el 40%</span>
-          </p>
-          <p className="mt-0.5 text-xs text-green-300/70">
-            Paga en USDT, Zelle o $ efectivo y ahorra hasta 40%
+            <span className="text-[#4ade80]">descuentos hasta el 40%</span>
+          </h2>
+          <p className="mt-4 text-[15px] font-medium text-slate-300/90">
+            Paga en USDT <span className="text-[#4ade80]">₮</span>, Zelle <span className="text-purple-400 font-bold">Z</span> o $ efectivo 💵 y ahorra hasta 40%
           </p>
         </div>
-
-        {/* Dismiss button */}
-        <button
-          onClick={dismiss}
-          className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-green-400/60 transition-colors hover:bg-green-500/20 hover:text-green-300"
-          aria-label="Cerrar"
-        >
-          <X className="h-4 w-4" />
-        </button>
       </div>
 
       <style>{`

@@ -1,5 +1,7 @@
 import Header from "@/components/Header";
 import ProductsSection from "@/components/ProductsSection";
+import CatalogSidebar from "@/components/CatalogSidebar";
+import { supabase } from "@/lib/supabase/client";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import DiscountBanner from "@/components/DiscountBanner";
@@ -20,23 +22,35 @@ const CatalogoPage = async ({ searchParams }: Props) => {
   const q = typeof resolvedParams?.q === "string" ? resolvedParams.q : "";
   const pageStr = typeof resolvedParams?.page === "string" ? resolvedParams.page : "1";
   const page = parseInt(pageStr, 10) || 1;
+  
+  const categoria = typeof resolvedParams?.categoria === "string" ? resolvedParams.categoria : undefined;
+  const marca = typeof resolvedParams?.marca === "string" ? resolvedParams.marca : undefined;
+  const sort = typeof resolvedParams?.sort === "string" ? resolvedParams.sort : "relevance";
+
+  // Pre-fetching de filtros para alimentar el menú lateral
+  const { data: categoriesData } = await supabase.from("categories").select("id, name").order("name");
+  const { data: brandsData } = await supabase.from("brands").select("id, name").order("name");
+  
+  const categories = categoriesData || [];
+  const brands = brandsData || [];
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
       <Header />
       <main className="flex-1">
-        {/* Page title bar */}
-        <div className="bg-surface-dark border-b border-surface-dark-foreground/10 px-4 py-4 md:py-6">
-          <div className="container mx-auto">
-            <h1 className="font-display text-xl font-black uppercase italic tracking-tight text-surface-dark-foreground md:text-2xl">
-              Catálogo de <span className="text-primary">Repuestos</span>
-            </h1>
-            <p className="mt-1 text-xs text-surface-dark-foreground/60">
-              Todos los precios incluyen descuento pagando en divisas ⚡
-            </p>
+
+        <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8 lg:gap-10">
+          <CatalogSidebar categories={categories} brands={brands} />
+          <div className="flex-1 w-full min-w-0">
+            <ProductsSection 
+              searchQuery={q} 
+              page={page} 
+              categoria={categoria}
+              marca={marca}
+              sort={sort}
+            />
           </div>
         </div>
-        <ProductsSection searchQuery={q} page={page} />
       </main>
       <Footer />
       <WhatsAppButton />

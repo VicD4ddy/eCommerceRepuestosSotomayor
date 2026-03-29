@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Plus, Pencil, Trash2, Upload, Loader2, ChevronLeft, ChevronRight, FileText, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Loader2, ChevronLeft, ChevronRight, FileText, Search, X as XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import imageCompression from 'browser-image-compression';
@@ -43,6 +43,11 @@ interface Brand {
   name: string;
 }
 
+interface SpecItem {
+  key: string;
+  value: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -55,6 +60,7 @@ interface Product {
   code_2?: string;
   category_id: string;
   stock_status: boolean;
+  specifications?: SpecItem[];
   categories?: { name: string };
   brands?: { name: string; image_url?: string };
 }
@@ -84,6 +90,7 @@ export default function ProductsAdminPage() {
     code_2: "",
     category_id: "",
     stock_status: true,
+    specifications: [] as SpecItem[],
   });
 
   const fetchData = async () => {
@@ -154,6 +161,7 @@ export default function ProductsAdminPage() {
       code_1: formData.code_1 || null,
       code_2: formData.code_2 || null,
       stock_status: formData.stock_status,
+      specifications: formData.specifications.filter(s => s.key.trim() && s.value.trim()),
     };
 
     try {
@@ -242,8 +250,30 @@ export default function ProductsAdminPage() {
     }
   };
 
+  const addSpecRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: [...prev.specifications, { key: "", value: "" }],
+    }));
+  };
+
+  const removeSpecRow = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: prev.specifications.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateSpecRow = (index: number, field: "key" | "value", val: string) => {
+    setFormData(prev => {
+      const updated = [...prev.specifications];
+      updated[index] = { ...updated[index], [field]: val };
+      return { ...prev, specifications: updated };
+    });
+  };
+
   const openCreateModal = () => {
-    setFormData({ id: "", name: "", price: "", image_url: "", image_2: "", description: "", brand_id: "", code_1: "", code_2: "", category_id: "", stock_status: true });
+    setFormData({ id: "", name: "", price: "", image_url: "", image_2: "", description: "", brand_id: "", code_1: "", code_2: "", category_id: "", stock_status: true, specifications: [] });
     setIsModalOpen(true);
   };
 
@@ -260,6 +290,7 @@ export default function ProductsAdminPage() {
       code_2: prod.code_2 || "",
       category_id: prod.category_id,
       stock_status: prod.stock_status,
+      specifications: Array.isArray(prod.specifications) ? prod.specifications : [],
     });
     setIsModalOpen(true);
   };
@@ -323,6 +354,50 @@ export default function ProductsAdminPage() {
                             className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                           />
                         </div>
+                      </div>
+
+                      {/* Specifications Editor */}
+                      <div className="space-y-4 rounded-lg border bg-card p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider">Especificaciones Técnicas</h4>
+                          <Button type="button" variant="outline" size="sm" onClick={addSpecRow} className="h-7 text-xs gap-1">
+                            <Plus className="h-3 w-3" /> Agregar
+                          </Button>
+                        </div>
+                        
+                        {formData.specifications.length === 0 ? (
+                          <div className="text-center py-4 text-muted-foreground text-xs border border-dashed rounded-lg">
+                            Sin especificaciones. Haz clic en "Agregar" para añadir detalles técnicos.
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {formData.specifications.map((spec, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <Input
+                                  placeholder="Ej. Material"
+                                  value={spec.key}
+                                  onChange={(e) => updateSpecRow(index, "key", e.target.value)}
+                                  className="bg-background text-sm flex-[2]"
+                                />
+                                <Input
+                                  placeholder="Ej. Acero Inoxidable"
+                                  value={spec.value}
+                                  onChange={(e) => updateSpecRow(index, "value", e.target.value)}
+                                  className="bg-background text-sm flex-[3]"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10"
+                                  onClick={() => removeSpecRow(index)}
+                                >
+                                  <XIcon className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-4 rounded-lg border bg-card p-4 shadow-sm">

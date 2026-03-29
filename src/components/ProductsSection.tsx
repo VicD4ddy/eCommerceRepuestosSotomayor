@@ -1,53 +1,173 @@
 import ProductCard from "./ProductCard";
 import { supabase } from "@/lib/supabase/client";
-import { SearchX, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { SearchX, ChevronLeft, ChevronRight, Search, SlidersHorizontal, ChevronRight as BreadcrumbArrow } from "lucide-react";
 import NextLink from "next/link";
+import SortDropdown from "./SortDropdown";
 
-const ProductsSection = async ({ searchQuery = "", page = 1 }: { searchQuery?: string, page?: number }) => {
+type Props = {
+  searchQuery?: string;
+  page?: number;
+  categoria?: string;
+  marca?: string;
+  sort?: string;
+};
+
+const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, sort = "relevance" }: Props) => {
   const itemsPerPage = 12;
-  const from = (page - 1) * itemsPerPage;
-  const to = from + itemsPerPage - 1;
 
-  let query = supabase
-    .from("products")
-    .select("*, categories(name), brands(name)", { count: 'exact' })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let products: any[] | null = null;
+  let count: number | null = 0;
 
-  if (searchQuery) {
-    query = query.or(`name.ilike.%${searchQuery}%,code_1.ilike.%${searchQuery}%,code_2.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+  // Try smart search RPC first (accent-insensitive + fuzzy)
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc("catalog_search", {
+      search_term: searchQuery || "",
+      category_filter: categoria || null,
+      brand_filter: marca || null,
+      sort_by: sort,
+      page_num: page,
+      page_size: itemsPerPage,
+    });
+
+    if (!rpcError && rpcData && rpcData.length > 0) {
+      // RPC returns total_count in each row
+      count = Number(rpcData[0].total_count) || 0;
+      products = rpcData.map((r: Record<string, unknown>) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        price: r.price,
+        image_url: r.image_url,
+        image_2: r.image_2,
+        code_1: r.code_1,
+        code_2: r.code_2,
+        categories: { name: r.category_name },
+        brands: { name: r.brand_name, image_url: r.brand_image_url },
+        specifications: r.specifications,
+      }));
+    } else if (!rpcError && rpcData && rpcData.length === 0) {
+      products = [];
+      count = 0;
+    } else {
+      throw new Error("RPC not available");
+    }
+  } catch {
+    // Fallback: basic ILIKE search
+    const from = (page - 1) * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    let query = supabase
+      .from("products")
+      .select("*, categories!inner(name), brands!inner(name, image_url), specifications", { count: 'exact' })
+      .range(from, to);
+
+    if (searchQuery) {
+      query = query.or(`name.ilike.%${searchQuery}%,code_1.ilike.%${searchQuery}%,code_2.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+    }
+    if (categoria) {
+      query = query.eq("categories.name", categoria);
+    }
+    if (marca) {
+      query = query.eq("brands.name", marca);
+    }
+
+    if (sort === "lowest_price") {
+      query = query.order("price", { ascending: true });
+    } else if (sort === "highest_price") {
+      query = query.order("price", { ascending: false });
+    } else if (sort === "newest") {
+      query = query.order("created_at", { ascending: false });
+    } else {
+      query = query.order("created_at", { ascending: false });
+    }
+
+    const result = await query;
+    products = result.data;
+    count = result.count;
   }
 
-  const { data: products, count } = await query;
   const totalPages = count ? Math.ceil(count / itemsPerPage) : 0;
   
   const createPageUrl = (newPage: number) => {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
+    if (categoria) params.set("categoria", categoria);
+    if (marca) params.set("marca", marca);
+    if (sort !== "relevance") params.set("sort", sort);
     params.set("page", newPage.toString());
-    return `/?${params.toString()}#productos`;
+    return `/catalogo?${params.toString()}#productos`;
   };
   
-  return (
-    <section id="productos" className="w-full max-w-[100vw] overflow-hidden bg-muted/50 py-10 md:py-16">
-      <div className="container mx-auto px-4">
-        {searchQuery ? (
-          <>
-            <h2 className="font-display text-2xl font-black uppercase text-foreground md:text-3xl">
-              Resultados: <span className="text-primary tracking-tight">"{searchQuery}"</span>
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {count === 0
-                ? "Ningún producto encontrado"
-                : `${count} producto${count !== 1 ? "s" : ""} encontrado${count !== 1 ? "s" : ""}`}
-            </p>
-          </>
-        ) : (
-          <h2 className="font-display text-2xl font-black uppercase italic tracking-tight text-foreground md:text-3xl">
-            Productos <span className="text-primary">Destacados</span>
-          </h2>
-        )}
+  const RELATED_KEYWORDS = ["Amortiguador", "Meseta", "Terminal", "Bomba", "Filtro", "Bujía"];
 
+  return (
+    <section id="productos" className="w-full">
+      <div className="w-full mb-6">
+        {/* Breadcrumbs */}
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-6 font-medium">
+          <span>Inicio</span>
+          <BreadcrumbArrow className="w-3 h-3" />
+          <span>Repuestos</span>
+          {categoria && (
+            <>
+              <BreadcrumbArrow className="w-3 h-3" />
+              <span className="text-slate-800 font-bold">{categoria}</span>
+            </>
+          )}
+          {marca && (
+            <>
+              <BreadcrumbArrow className="w-3 h-3" />
+              <span className="text-slate-800">{marca}</span>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            {searchQuery ? (
+              <>
+                <h2 className="font-display text-2xl font-black uppercase text-foreground md:text-3xl">
+                  {categoria ? `${categoria} ` : ''}Resultados: <span className="text-primary tracking-tight">"{searchQuery}"</span>
+                </h2>
+                <div className="mt-2 text-sm text-muted-foreground flex items-center gap-2">
+                  <span>
+                    {count === 0
+                      ? "Ningún producto encontrado."
+                      : (count === 1 ? "1 resultado." : `${count} resultados.`)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <h2 className="font-display text-2xl font-black uppercase text-foreground md:text-3xl tracking-tight">
+                {categoria ? categoria : (marca ? `Repuestos ${marca}` : "Nuestro Catálogo")}
+              </h2>
+            )}
+          </div>
+          
+          <div className="flex items-center self-start md:self-end gap-3 mt-4 md:mt-0 w-full md:w-auto">
+             <div className="flex items-center gap-2 text-sm font-bold text-slate-600 shrink-0">
+               <SlidersHorizontal className="w-4 h-4" />
+               <span className="hidden sm:inline">Ordenar por:</span>
+             </div>
+             <SortDropdown currentSort={sort} />
+          </div>
+        </div>
+
+        {/* Búsquedas Relacionadas (Píldoras ML Style) */}
+        {!categoria && !marca && (
+          <div className="flex items-center gap-2 mt-4 overflow-x-auto scrollbar-hide pb-2">
+            <span className="text-xs text-slate-500 whitespace-nowrap hidden sm:inline">Búsquedas sugeridas:</span>
+            {RELATED_KEYWORDS.map(kw => (
+               <NextLink key={kw} href={`/catalogo?q=${kw}`} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors">
+                  {kw}
+               </NextLink>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="w-full">
         {/* Mobile search bar — only visible below md */}
         <form method="GET" action="/catalogo" className="relative mt-4 md:hidden">
           <input
@@ -75,8 +195,10 @@ const ProductsSection = async ({ searchQuery = "", page = 1 }: { searchQuery?: s
                 image2={product.image_2}
                 description={product.description}
                 brand={product.brands?.name}
+                brand_image={product.brands?.image_url}
                 code_1={product.code_1}
                 code_2={product.code_2}
+                specifications={product.specifications}
               />
             ))}
           </div>
@@ -117,7 +239,7 @@ const ProductsSection = async ({ searchQuery = "", page = 1 }: { searchQuery?: s
             </div>
             <h3 className="text-xl font-bold text-foreground">No encontramos nada...</h3>
             <p className="text-muted-foreground mt-2 max-w-sm">No hay productos que coincidan con tu búsqueda actual. Intenta utilizar términos más generales.</p>
-            <a href="/#productos" className="mt-6 inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90 transition-colors uppercase text-sm tracking-wider">
+            <a href="/catalogo" className="mt-6 inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90 transition-colors uppercase text-sm tracking-wider">
               Ver todo el catálogo
             </a>
           </div>
