@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Plus, Pencil, Trash2, Upload, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Loader2, Search } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import imageCompression from 'browser-image-compression';
 import { Input } from "@/components/ui/input";
@@ -22,12 +23,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 interface Brand {
   id: string;
   name: string;
   image_url?: string;
+  product_count?: number;
 }
 
 export default function BrandsAdminPage() {
@@ -35,7 +47,9 @@ export default function BrandsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchFilter, setSearchFilter] = useState("");
   const [formData, setFormData] = useState({ id: "", name: "", image_url: "" });
+  const [brandToDelete, setBrandToDelete] = useState<{id: string, name: string} | null>(null);
 
   const fetchBrands = async () => {
     setLoading(true);
@@ -46,9 +60,19 @@ export default function BrandsAdminPage() {
 
     if (error) {
       toast.error("Error al cargar marcas", { description: error.message });
-    } else {
-      setBrands(data || []);
+      setLoading(false);
+      return;
     }
+    const list = data || [];
+    const countsPromises = list.map(async (b: Brand) => {
+      const { count } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("brand_id", b.id);
+      return { ...b, product_count: count || 0 };
+    });
+    const brandsWithCounts = await Promise.all(countsPromises);
+    setBrands(brandsWithCounts);
     setLoading(false);
   };
 
@@ -85,16 +109,17 @@ export default function BrandsAdminPage() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`¿Seguro que deseas eliminar la marca "${name}"? Esto podría fallar si hay productos usándola.`)) return;
+  const confirmDelete = async () => {
+    if (!brandToDelete) return;
 
-    const { error } = await supabase.from("brands").delete().eq("id", id);
+    const { error } = await supabase.from("brands").delete().eq("id", brandToDelete.id);
     if (error) {
       toast.error("Error al eliminar", { description: "Verifica que no existan productos enlazados a esta marca." });
     } else {
       toast.success("Marca eliminada");
       fetchBrands();
     }
+    setBrandToDelete(null);
   };
 
   const openCreateModal = () => {
@@ -156,11 +181,42 @@ export default function BrandsAdminPage() {
     }
   };
 
+  const filteredBrands = brands.filter(b =>
+    b.name.toLowerCase().includes(searchFilter.toLowerCase())
+  );
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
+      <AlertDialog open={!!brandToDelete} onOpenChange={(open) => !open && setBrandToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta marca?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Vas a eliminar permanentemente la marca &quot;<strong className="text-foreground">{brandToDelete?.name}</strong>&quot;. Esto podr&iacute;a fallar si existen productos asignados a ella.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Marcas</h2>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
+          <div className="relative w-48 hidden md:block">
+            <LucideIcons.Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Filtrar marcas..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="pl-8 bg-background h-9"
+            />
+          </div>
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
               <Button onClick={openCreateModal}>
@@ -241,6 +297,7 @@ export default function BrandsAdminPage() {
             <TableRow>
               <TableHead className="w-16">Logo</TableHead>
               <TableHead>Nombre</TableHead>
+              <TableHead>Productos</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -254,7 +311,7 @@ export default function BrandsAdminPage() {
                 <TableCell colSpan={2} className="h-24 text-center">No hay marcas registradas.</TableCell>
               </TableRow>
             ) : (
-              brands.map((brand) => (
+              brands.map((_b) => null) && filteredBrands.map((brand) => (
                 <TableRow key={brand.id}>
                   <TableCell>
                     {brand.image_url ? (
@@ -268,6 +325,11 @@ export default function BrandsAdminPage() {
                     )}
                   </TableCell>
                   <TableCell className="font-bold uppercase tracking-wide">{brand.name}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-bold">
+                      {brand.product_count ?? 0}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => openEditModal(brand)}>
                       <Pencil className="h-4 w-4" />
@@ -276,7 +338,8 @@ export default function BrandsAdminPage() {
                       variant="ghost"
                       size="icon"
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => handleDelete(brand.id, brand.name)}
+                      onClick={() => setBrandToDelete({id: brand.id, name: brand.name})}
+                      title="Eliminar"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

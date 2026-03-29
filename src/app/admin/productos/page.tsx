@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Plus, Pencil, Trash2, Upload, Loader2, ChevronLeft, ChevronRight, FileText, Search, X as XIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Loader2, ChevronLeft, ChevronRight, FileText, Search, X as XIcon, Copy, ClipboardList, Download, ArrowUpDown, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import imageCompression from 'browser-image-compression';
+import * as XLSX from 'xlsx';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,6 +24,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -73,11 +84,14 @@ export default function ProductsAdminPage() {
   const [uploadingImg1, setUploadingImg1] = useState(false);
   const [uploadingImg2, setUploadingImg2] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<{id: string, name: string} | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc'|'desc' }>({ key: 'created_at', direction: 'desc' });
   const itemsPerPage = 8;
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     id: "",
     name: "",
@@ -102,7 +116,7 @@ export default function ProductsAdminPage() {
 
     let query = supabase.from("products")
       .select("*, categories:category_id (name), brands:brand_id (name, image_url)", { count: "exact" })
-      .order("created_at", { ascending: false });
+      .order(sortConfig.key, { ascending: sortConfig.direction === 'asc' });
 
     if (searchTerm) {
       query = query.or(`name.ilike.%${searchTerm}%,code_1.ilike.%${searchTerm}%`);
@@ -141,7 +155,14 @@ export default function ProductsAdminPage() {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, sortConfig]);
+
+  const handleSort = (key: string) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,16 +204,17 @@ export default function ProductsAdminPage() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`¿Seguro que deseas eliminar el producto "${name}"?`)) return;
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
 
-    const { error } = await supabase.from("products").delete().eq("id", id);
+    const { error } = await supabase.from("products").delete().eq("id", productToDelete.id);
     if (error) {
       toast.error("Error al eliminar", { description: error.message });
     } else {
       toast.success("Producto eliminado");
       fetchData();
     }
+    setProductToDelete(null);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isImage2: boolean) => {
@@ -297,6 +319,118 @@ export default function ProductsAdminPage() {
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
+      {/* PREVIEW MODAL */}
+      <Dialog open={!!previewProduct} onOpenChange={(open) => !open && setPreviewProduct(null)}>
+        <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden rounded-xl border-border bg-card">
+          {previewProduct && (
+            <div className="grid md:grid-cols-2 lg:grid-cols-5 h-full max-h-[90vh]">
+              {/* Image Section */}
+              <div className="bg-white p-6 md:p-10 flex items-center justify-center lg:col-span-2 border-r relative min-h-[300px]">
+                {previewProduct.image_2 && (
+                  <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                    <img src={previewProduct.image_url} alt="Vista 1" className="h-12 w-12 rounded cursor-pointer border-2 bg-white object-contain hover:border-primary shadow-sm transition-all" />
+                    <img src={previewProduct.image_2} alt="Vista 2" className="h-12 w-12 rounded cursor-pointer border border-border bg-white object-contain opacity-60 hover:opacity-100 transition-all" />
+                  </div>
+                )}
+                {/* Brand Badge */}
+                {previewProduct.brands?.image_url && (
+                  <div className="absolute top-4 right-4 h-8 w-16 bg-white rounded flex items-center justify-center p-1 border shadow-sm z-10">
+                    <img src={previewProduct.brands.image_url} alt={previewProduct.brands.name || "Marca"} className="max-h-full max-w-full object-contain" />
+                  </div>
+                )}
+                <img src={previewProduct.image_url} alt={previewProduct.name} className="max-w-full max-h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.15)]" />
+              </div>
+
+              {/* Data Section */}
+              <div className="p-6 md:p-8 lg:col-span-3 flex flex-col bg-card overflow-y-auto">
+                <DialogHeader className="mb-4 text-left">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                      {previewProduct.categories?.name || "Categoría"}
+                    </span>
+                    {previewProduct.stock_status && (
+                      <span className="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-semibold text-green-600">
+                        Disponibilidad Inmediata
+                      </span>
+                    )}
+                  </div>
+                  <DialogTitle className="text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-tight">
+                    {previewProduct.name}
+                  </DialogTitle>
+                </DialogHeader>
+
+                {/* Codes */}
+                <div className="flex flex-wrap items-center gap-4 mb-6 bg-muted/50 p-3 rounded-lg border border-border/50">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Código Original (OEM)</span>
+                    <span className="font-mono text-sm font-semibold">{previewProduct.code_1 || "N/A"}</span>
+                  </div>
+                  {(previewProduct.code_2 || previewProduct.brands?.name) && (
+                    <div className="w-px h-8 bg-border" />
+                  )}
+                  {previewProduct.code_2 && (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Código Alternativo</span>
+                      <span className="font-mono text-sm font-semibold text-muted-foreground">{previewProduct.code_2}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-6">
+                  <span className="text-4xl font-black text-foreground tracking-tight">${previewProduct.price.toFixed(2)}</span>
+                </div>
+
+                {/* Specs Table */}
+                {previewProduct.specifications && Array.isArray(previewProduct.specifications) && previewProduct.specifications.length > 0 && (
+                  <div className="mb-6 border rounded-lg overflow-hidden bg-background">
+                    <div className="bg-muted/50 px-3 py-2 border-b">
+                      <h4 className="text-xs uppercase font-bold text-muted-foreground tracking-wider">Especificaciones Técnicas</h4>
+                    </div>
+                    <div className="divide-y divide-border">
+                      {previewProduct.specifications.map((spec: any, idx: number) => (
+                        <div key={idx} className="flex px-3 py-2 text-sm hover:bg-muted/30 transition-colors">
+                          <span className="font-semibold text-muted-foreground w-1/3 shrink-0">{spec.key}</span>
+                          <span className="font-medium">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {previewProduct.description && (
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <ChevronRight className="h-4 w-4 text-primary" />
+                      Descripción
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap pl-6">
+                      {previewProduct.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente &quot;<strong className="text-foreground">{productToDelete?.name}</strong>&quot; y todo su contenido asociado de los servidores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Productos</h2>
         <div className="flex items-center space-x-2">
@@ -315,6 +449,33 @@ export default function ProductsAdminPage() {
               <FileText className="mr-2 h-4 w-4" /> Importar CSV
             </Button>
           </Link>
+          <Button
+            variant="outline"
+            className="hidden sm:flex bg-background"
+            onClick={async () => {
+              const { data } = await supabase
+                .from("products")
+                .select("name, price, description, code_1, code_2, categories:category_id(name), brands:brand_id(name)")
+                .order("name");
+              if (!data || data.length === 0) { toast.error("No hay productos para exportar"); return; }
+              const rows = data.map((p: any) => ({
+                Nombre: p.name,
+                "Precio USD": p.price,
+                Categoría: p.categories?.name || "",
+                Marca: p.brands?.name || "",
+                Descripción: p.description || "",
+                "Código OEM": p.code_1 || "",
+                "Cod. Alterno": p.code_2 || "",
+              }));
+              const ws = XLSX.utils.json_to_sheet(rows);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Productos");
+              XLSX.writeFile(wb, `productos_sotomayor_${new Date().toISOString().slice(0,10)}.xlsx`);
+              toast.success(`${rows.length} productos exportados`);
+            }}
+          >
+            <Download className="mr-2 h-4 w-4" /> Exportar Excel
+          </Button>
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
               <Button onClick={openCreateModal}>
@@ -358,16 +519,80 @@ export default function ProductsAdminPage() {
 
                       {/* Specifications Editor */}
                       <div className="space-y-4 rounded-lg border bg-card p-4 shadow-sm">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider">Especificaciones Técnicas</h4>
-                          <Button type="button" variant="outline" size="sm" onClick={addSpecRow} className="h-7 text-xs gap-1">
-                            <Plus className="h-3 w-3" /> Agregar
-                          </Button>
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider">Especificaciones T&#233;cnicas</h4>
+                          <div className="flex gap-1.5">
+                            {formData.specifications.length === 0 && formData.category_id && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                                onClick={() => {
+                                  const catName = categories.find(c => c.id === formData.category_id)?.name?.toLowerCase() || "";
+                                  const templates: Record<string, SpecItem[]> = {
+                                    "suspensi\u00f3n": [
+                                      { key: "Material", value: "" },
+                                      { key: "Posici\u00f3n", value: "" },
+                                      { key: "Aplicaci\u00f3n", value: "" },
+                                      { key: "Incluye", value: "" },
+                                      { key: "Garant\u00eda", value: "" },
+                                    ],
+                                    "suspensi\u00f3n y direcci\u00f3n": [
+                                      { key: "Material", value: "" },
+                                      { key: "Posici\u00f3n", value: "" },
+                                      { key: "Aplicaci\u00f3n", value: "" },
+                                      { key: "Incluye", value: "" },
+                                      { key: "Garant\u00eda", value: "" },
+                                    ],
+                                    "motor": [
+                                      { key: "Tipo", value: "" },
+                                      { key: "Cilindrada", value: "" },
+                                      { key: "Material", value: "" },
+                                      { key: "Aplicaci\u00f3n", value: "" },
+                                      { key: "Incluye", value: "" },
+                                    ],
+                                    "frenos": [
+                                      { key: "Material", value: "" },
+                                      { key: "Posici\u00f3n", value: "" },
+                                      { key: "Di\u00e1metro", value: "" },
+                                      { key: "Aplicaci\u00f3n", value: "" },
+                                      { key: "Incluye", value: "" },
+                                    ],
+                                    "tren delantero": [
+                                      { key: "Material", value: "" },
+                                      { key: "Posici\u00f3n", value: "" },
+                                      { key: "Lado", value: "" },
+                                      { key: "Aplicaci\u00f3n", value: "" },
+                                      { key: "Incluye", value: "" },
+                                    ],
+                                  };
+                                  // Find matching template (partial match)
+                                  const templateKey = Object.keys(templates).find(k => catName.includes(k));
+                                  const specs = templateKey
+                                    ? templates[templateKey]
+                                    : [
+                                        { key: "Material", value: "" },
+                                        { key: "Aplicaci\u00f3n", value: "" },
+                                        { key: "Incluye", value: "" },
+                                        { key: "Garant\u00eda", value: "" },
+                                      ];
+                                  setFormData(prev => ({ ...prev, specifications: specs }));
+                                  toast.success("Plantilla cargada. Completa los valores.");
+                                }}
+                              >
+                                <ClipboardList className="h-3 w-3" /> Cargar Plantilla
+                              </Button>
+                            )}
+                            <Button type="button" variant="outline" size="sm" onClick={addSpecRow} className="h-7 text-xs gap-1">
+                              <Plus className="h-3 w-3" /> Agregar
+                            </Button>
+                          </div>
                         </div>
                         
                         {formData.specifications.length === 0 ? (
                           <div className="text-center py-4 text-muted-foreground text-xs border border-dashed rounded-lg">
-                            Sin especificaciones. Haz clic en "Agregar" para añadir detalles técnicos.
+                            Sin especificaciones. Usa &quot;Cargar Plantilla&quot; o &quot;Agregar&quot; para a&#241;adir detalles t&#233;cnicos.
                           </div>
                         ) : (
                           <div className="space-y-2">
@@ -603,12 +828,18 @@ export default function ProductsAdminPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-16">Img</TableHead>
-              <TableHead>Nombre</TableHead>
+              <TableHead onClick={() => handleSort('name')} className="cursor-pointer hover:bg-muted">
+                Nombre <ArrowUpDown className="ml-1 h-3 w-3 inline" />
+              </TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Marca</TableHead>
               <TableHead>Códigos</TableHead>
-              <TableHead>Precio</TableHead>
-              <TableHead>Stock</TableHead>
+              <TableHead onClick={() => handleSort('price')} className="cursor-pointer hover:bg-muted">
+                Precio <ArrowUpDown className="ml-1 h-3 w-3 inline" />
+              </TableHead>
+              <TableHead onClick={() => handleSort('stock_status')} className="cursor-pointer hover:bg-muted">
+                Stock <ArrowUpDown className="ml-1 h-3 w-3 inline" />
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -627,7 +858,30 @@ export default function ProductsAdminPage() {
                   <TableCell>
                     <img src={prod.image_url} alt={prod.name} className="h-8 w-8 rounded-md object-cover" />
                   </TableCell>
-                  <TableCell className="font-medium">{prod.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-1.5">
+                      {(() => {
+                        const hasImage = !!prod.image_url && !prod.image_url.includes("placehold");
+                        const hasDesc = !!prod.description && prod.description.length > 10;
+                        const hasSpecs = prod.specifications && Array.isArray(prod.specifications) && prod.specifications.length > 0;
+                        const hasPrice = prod.price > 0;
+                        const score = [hasImage, hasDesc, hasSpecs, hasPrice].filter(Boolean).length;
+                        const color = score === 4 ? "bg-green-500" : score >= 2 ? "bg-amber-400" : "bg-red-500";
+                        const labels = [];
+                        if (!hasImage) labels.push("imagen");
+                        if (!hasDesc) labels.push("descripción");
+                        if (!hasSpecs) labels.push("specs");
+                        if (!hasPrice) labels.push("precio");
+                        return (
+                          <span
+                            className={`h-2 w-2 rounded-full shrink-0 ${color}`}
+                            title={score === 4 ? "Producto completo" : `Falta: ${labels.join(", ")}`}
+                          />
+                        );
+                      })()}
+                      <span className="truncate max-w-[200px]">{prod.name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>{prod.categories?.name}</TableCell>
                   <TableCell>
                     {prod.brands?.image_url ? (
@@ -660,15 +914,47 @@ export default function ProductsAdminPage() {
                       <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20">No</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEditModal(prod)}>
-                      <Pencil className="h-4 w-4" />
+                  <TableCell className="text-right whitespace-nowrap">
+                    <Button variant="ghost" size="icon" onClick={() => setPreviewProduct(prod)} title="Vista Previa">
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEditModal(prod)} title="Editar">
+                      <Pencil className="h-4 w-4 text-primary/80" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Duplicar"
+                      onClick={async () => {
+                        const { error } = await supabase.from("products").insert([{
+                          name: prod.name + " (Copia)",
+                          price: prod.price,
+                          image_url: prod.image_url,
+                          image_2: prod.image_2 || null,
+                          description: prod.description || null,
+                          brand_id: prod.brand_id || null,
+                          code_1: prod.code_1 ? prod.code_1 + "-COPIA" : null,
+                          code_2: prod.code_2 || null,
+                          category_id: prod.category_id,
+                          stock_status: prod.stock_status,
+                          specifications: prod.specifications || [],
+                        }]);
+                        if (error) {
+                          toast.error("Error al duplicar", { description: error.message });
+                        } else {
+                          toast.success(`"${prod.name}" duplicado con éxito`);
+                          fetchData();
+                        }
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => handleDelete(prod.id, prod.name)}
+                      onClick={() => setProductToDelete({id: prod.id, name: prod.name})}
+                      title="Eliminar"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
