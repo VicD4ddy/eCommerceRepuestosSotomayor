@@ -9,18 +9,25 @@ type Props = {
   page?: number;
   categoria?: string;
   marca?: string;
+  kitId?: string;
+  activeKitName?: string;
+  motor?: string;
+  tren?: string;
   sort?: string;
 };
 
-const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, sort = "relevance" }: Props) => {
+const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, kitId, activeKitName, motor, tren, sort = "relevance" }: Props) => {
   const itemsPerPage = 12;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let products: any[] | null = null;
   let count: number | null = 0;
 
-  // Try smart search RPC first (accent-insensitive + fuzzy)
+  // Try smart search RPC first (accent-insensitive + fuzzy) unless filtering by Kit (Motor/Tren)
   try {
+    if (kitId) {
+      throw new Error("Kit filter active, using relational join");
+    }
     const { data: rpcData, error: rpcError } = await supabase.rpc("catalog_search", {
       search_term: searchQuery || "",
       category_filter: categoria || null,
@@ -57,25 +64,34 @@ const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, s
     const from = (page - 1) * itemsPerPage;
     const to = from + itemsPerPage - 1;
 
+    let selectClause = "id, name, description, price:price_usd, image_url, code_1:code, code_2:code, created_at, ";
+    selectClause += categoria ? "categories!inner(name), " : "categories(name), ";
+    selectClause += marca ? "brands!inner(name, image_url:logo_url), " : "brands(name, image_url:logo_url), ";
+    selectClause += kitId ? "kit_items!inner(kit_id)" : "kit_items(kit_id)";
+
     let query = supabase
       .from("products")
-      .select("*, categories!inner(name), brands!inner(name, image_url), specifications", { count: 'exact' })
+      .select(selectClause, { count: 'exact' })
+      .or("is_active.eq.true,is_active.is.null")
       .range(from, to);
 
     if (searchQuery) {
-      query = query.or(`name.ilike.%${searchQuery}%,code_1.ilike.%${searchQuery}%,code_2.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      query = query.or(`name.ilike.%${searchQuery}%,code.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
     }
     if (categoria) {
-      query = query.eq("categories.name", categoria);
+      query = query.ilike("categories.name", categoria);
     }
     if (marca) {
-      query = query.eq("brands.name", marca);
+      query = query.ilike("brands.name", marca);
+    }
+    if (kitId) {
+      query = query.eq("kit_items.kit_id", kitId);
     }
 
     if (sort === "lowest_price") {
-      query = query.order("price", { ascending: true });
+      query = query.order("price_usd", { ascending: true });
     } else if (sort === "highest_price") {
-      query = query.order("price", { ascending: false });
+      query = query.order("price_usd", { ascending: false });
     } else if (sort === "newest") {
       query = query.order("created_at", { ascending: false });
     } else {
@@ -87,6 +103,34 @@ const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, s
     count = result.count;
   }
 
+  // Consultar nombres de kits compatibles para los repuestos en pantalla (ligero y ultrarrápido)
+  if (products && products.length > 0) {
+    const pIds = products.map((p) => p.id).filter(Boolean);
+    if (pIds.length > 0) {
+      const { data: kMap } = await supabase
+        .from("kit_items")
+        .select("product_id, kits(name)")
+        .in("product_id", pIds);
+
+      const kByProd: Record<string, string[]> = {};
+      kMap?.forEach((item: Record<string, unknown>) => {
+        const kObj = Array.isArray(item.kits) ? item.kits[0] : (item.kits as Record<string, unknown>);
+        if (kObj && typeof kObj.name === "string") {
+          const pid = item.product_id as string;
+          kByProd[pid] = kByProd[pid] || [];
+          if (!kByProd[pid].includes(kObj.name)) {
+            kByProd[pid].push(kObj.name);
+          }
+        }
+      });
+
+      products = products.map((p) => ({
+        ...p,
+        compatibleKits: kByProd[p.id] || [],
+      }));
+    }
+  }
+
   const totalPages = count ? Math.ceil(count / itemsPerPage) : 0;
   
   const createPageUrl = (newPage: number) => {
@@ -94,12 +138,14 @@ const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, s
     if (searchQuery) params.set("q", searchQuery);
     if (categoria) params.set("categoria", categoria);
     if (marca) params.set("marca", marca);
+    if (motor) params.set("motor", motor);
+    if (tren) params.set("tren", tren);
     if (sort !== "relevance") params.set("sort", sort);
     params.set("page", newPage.toString());
     return `/catalogo?${params.toString()}#productos`;
   };
   
-  const RELATED_KEYWORDS = ["Amortiguador", "Meseta", "Terminal", "Bomba", "Filtro", "Bujía"];
+  const RELATED_KEYWORDS = ["Anillos", "Bielas", "Bancadas", "Estoperas", "Base de Motor", "Terminales"];
 
   return (
     <section id="productos" className="w-full">
@@ -153,8 +199,8 @@ const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, s
         {!categoria && !marca && (
           <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-hide pb-1 md:mt-4 md:gap-2 md:pb-2">
             <span className="text-[10px] text-slate-400 whitespace-nowrap hidden sm:inline md:text-xs">Sugeridas:</span>
-            {RELATED_KEYWORDS.map(kw => (
-               <NextLink key={kw} href={`/catalogo?q=${kw}`} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-full text-[11px] md:text-xs font-medium whitespace-nowrap transition-colors">
+             {RELATED_KEYWORDS.map(kw => (
+               <NextLink key={kw} href={`/catalogo?categoria=${encodeURIComponent(kw)}`} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-full text-[11px] md:text-xs font-medium whitespace-nowrap transition-colors">
                   {kw}
                </NextLink>
             ))}
@@ -194,6 +240,8 @@ const ProductsSection = async ({ searchQuery = "", page = 1, categoria, marca, s
                 code_1={product.code_1}
                 code_2={product.code_2}
                 specifications={product.specifications}
+                activeKitFilter={activeKitName}
+                compatibleKits={product.compatibleKits}
               />
             ))}
           </div>

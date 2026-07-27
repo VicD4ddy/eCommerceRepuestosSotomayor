@@ -19,13 +19,18 @@ interface ProductViewProps {
     code_2: string;
     categories: { name: string };
     brands: { name: string };
+    compatible_kits?: { id: string; name: string; category: string }[];
   }
 }
 
 export default function ProductView({ product }: ProductViewProps) {
-  const [activeImage, setActiveImage] = useState(product.image_url);
+  const safeImage = (product.image_url && typeof product.image_url === "string" && product.image_url.trim() !== "") ? product.image_url : "/placeholder.svg";
+  const safeImage2 = (product.image_2 && typeof product.image_2 === "string" && product.image_2.trim() !== "") ? product.image_2 : null;
+
+  const [activeImage, setActiveImage] = useState(safeImage);
   const addItem = useCartStore((state) => state.addItem);
   const bcvRate = useBcvStore((state) => state.rate);
+  const bcvMultiplier = useBcvStore((state) => state.multiplier || 1.6);
 
   const handleAddToCart = () => {
     addItem({ 
@@ -33,7 +38,7 @@ export default function ProductView({ product }: ProductViewProps) {
       category: product.categories?.name || "General", 
       name: product.name, 
       price: product.price, 
-      image: product.image_url 
+      image: safeImage 
     });
     toast.success("Producto añadido", {
       description: `${product.name} ha sido añadido al carrito.`,
@@ -70,23 +75,23 @@ export default function ProductView({ product }: ProductViewProps) {
         {/* Left side: Images gallery */}
         <div className="w-full md:w-1/2 bg-surface-dark/5 p-8 flex flex-col justify-center items-center relative gap-8">
           <div className="relative aspect-square w-full max-w-[400px] overflow-hidden rounded-xl bg-white shadow-md border">
-            <img src={activeImage} alt={product.name} className="h-full w-full object-contain p-6" />
+            <img src={activeImage || safeImage} alt={product.name} className="h-full w-full object-contain p-6" />
           </div>
           
           {/* Thumbnail selector if there's a second image */}
-          {product.image_2 && (
+          {safeImage2 && (
             <div className="flex gap-4 justify-center">
               <button 
-                className={`h-20 w-20 overflow-hidden bg-white rounded-md border-2 transition-all ${activeImage === product.image_url ? 'border-primary ring-2 ring-primary/20' : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'}`}
-                onClick={() => setActiveImage(product.image_url)}
+                className={`h-20 w-20 overflow-hidden bg-white rounded-md border-2 transition-all ${activeImage === safeImage ? 'border-primary ring-2 ring-primary/20' : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'}`}
+                onClick={() => setActiveImage(safeImage)}
               >
-                <img src={product.image_url} className="h-full w-full object-contain p-1.5" />
+                <img src={safeImage} className="h-full w-full object-contain p-1.5" />
               </button>
               <button 
-                className={`h-20 w-20 overflow-hidden bg-white rounded-md border-2 transition-all ${activeImage === product.image_2 ? 'border-primary ring-2 ring-primary/20' : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'}`}
-                onClick={() => setActiveImage(product.image_2)}
+                className={`h-20 w-20 overflow-hidden bg-white rounded-md border-2 transition-all ${activeImage === safeImage2 ? 'border-primary ring-2 ring-primary/20' : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'}`}
+                onClick={() => setActiveImage(safeImage2)}
               >
-                <img src={product.image_2} className="h-full w-full object-contain p-1.5" />
+                <img src={safeImage2} className="h-full w-full object-contain p-1.5" />
               </button>
             </div>
           )}
@@ -98,12 +103,31 @@ export default function ProductView({ product }: ProductViewProps) {
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">{product.categories?.name || "Categoría General"}</p>
             <h1 className="text-3xl md:text-4xl font-black font-display leading-[1.1] text-foreground">{product.name}</h1>
             
-            {/* Brand & Codes Badges */}
+            {/* Brand Badges */}
             <div className="flex flex-wrap gap-2 mt-4">
               {product.brands?.name && <span className="inline-flex items-center rounded-md bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground ring-1 ring-inset ring-border uppercase tracking-wider">Marca: <span className="text-foreground ml-1.5">{product.brands.name}</span></span>}
-              {product.code_1 && <span className="inline-flex items-center rounded-md bg-muted px-3 py-1.5 text-[11px] font-bold text-muted-foreground ring-1 ring-inset ring-border font-mono uppercase">Cod 1: <span className="text-foreground ml-1.5">{product.code_1}</span></span>}
-              {product.code_2 && <span className="inline-flex items-center rounded-md bg-muted px-3 py-1.5 text-[11px] font-bold text-muted-foreground ring-1 ring-inset ring-border font-mono uppercase">Cod 2: <span className="text-foreground ml-1.5">{product.code_2}</span></span>}
             </div>
+
+            {/* Recuadro Verde de Vehículos / Motores Compatibles (Opción A) */}
+            {product.compatible_kits && product.compatible_kits.length > 0 && (
+              <div className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 dark:bg-emerald-500/5 p-4 shadow-sm transition-all">
+                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400 font-black text-xs md:text-sm uppercase tracking-wider mb-2.5">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-bold">✓</span>
+                  <span>Vehículos / Motores Compatibles:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  {product.compatible_kits.map((kit, index) => (
+                    <NextLink
+                      key={kit.id || index}
+                      href={`/catalogo?${kit.category === 'Tren Delantero' ? 'tren' : 'motor'}=${encodeURIComponent(kit.name)}`}
+                      className="inline-flex items-center rounded-lg bg-emerald-600/15 hover:bg-emerald-600/25 px-2.5 py-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300 transition-colors border border-emerald-500/20 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                    >
+                      {kit.name}
+                    </NextLink>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <p className="text-foreground/80 break-words mt-6 text-sm md:text-base leading-relaxed whitespace-pre-wrap bg-surface-dark/5 p-4 rounded-lg">
               {product.description || "No hay descripción detallada disponible para este repuesto en este momento."}
@@ -114,12 +138,12 @@ export default function ProductView({ product }: ProductViewProps) {
              {/* Main BCV price */}
              <div className="flex flex-col mb-5 gap-1">
                 <span className="font-display text-4xl font-black tracking-tight text-primary">
-                  ${(product.price * 1.6).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${(product.price * bcvMultiplier).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
                 <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Precio Tasa BCV</span>
                 {bcvRate && (
                   <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider mt-2 bg-muted w-fit px-3 py-1.5 rounded-md">
-                    Ref. Bs: {(product.price * 1.6 * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    Ref. Bs: {(product.price * bcvMultiplier * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 )}
              </div>

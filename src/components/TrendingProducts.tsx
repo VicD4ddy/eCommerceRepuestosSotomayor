@@ -5,7 +5,8 @@ const TrendingProducts = async () => {
   // Traemos los 30 más recientes para mantener inventario fresco
   const { data: products } = await supabase
     .from("products")
-    .select("*, categories(name), brands(name)")
+    .select("id, name, description, price:price_usd, image_url, image_2:image_urls, code_1:code, code_2:code, created_at, categories(name), brands(name, image_url:logo_url)")
+    .or("is_active.eq.true,is_active.is.null")
     .limit(50)
     .order("created_at", { ascending: false });
 
@@ -33,22 +34,27 @@ const TrendingProducts = async () => {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          {trending.map((product) => (
-            <div key={product.id} className="transition-all duration-300 hover:-translate-y-1">
-              <ProductCard 
-                id={product.id}
-                category={product.categories?.name || "General"}
-                name={product.name}
-                price={product.price}
-                image={product.image_url}
-                image2={product.image_2}
-                description={product.description}
-                brand={product.brands?.name}
-                code_1={product.code_1}
-                code_2={product.code_2}
-              />
-            </div>
-          ))}
+          {trending.map((product) => {
+            const catObj = Array.isArray(product.categories) ? product.categories[0] : product.categories;
+            const brandObj = Array.isArray(product.brands) ? product.brands[0] : product.brands;
+            return (
+              <div key={product.id} className="transition-all duration-300 hover:-translate-y-1">
+                <ProductCard 
+                  id={product.id}
+                  category={catObj?.name || "General"}
+                  name={product.name}
+                  price={product.price}
+                  image={product.image_url}
+                  image2={product.image_2}
+                  description={product.description}
+                  brand={brandObj?.name}
+                  brand_image={brandObj?.image_url}
+                  code_1={product.code_1}
+                  code_2={product.code_2}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

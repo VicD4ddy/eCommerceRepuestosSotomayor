@@ -62,9 +62,9 @@ const Footer = () => {
               Categorías Populares
             </h4>
             <ul className="mt-4 space-y-2 font-body text-sm text-surface-dark-foreground/70">
-              {["Motor", "Suspensión", "Frenos", "Transmisión", "Tren Delantero"].map((cat) => (
+              {["Anillos", "Bielas", "Bancadas", "Estoperas", "Base de Motor"].map((cat) => (
                 <li key={cat}>
-                  <a href="#" className="transition-colors hover:text-primary">
+                  <a href={`/catalogo?categoria=${encodeURIComponent(cat)}`} className="transition-colors hover:text-primary">
                     {cat}
                   </a>
                 </li>

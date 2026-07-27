@@ -4,13 +4,15 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Check, Filter, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
-type SubCategory = { id: string; name: string };
+type SubCategory = { id: string; name: string; count?: number };
 type Props = {
   categories: SubCategory[];
   brands: SubCategory[];
+  motorKits?: SubCategory[];
+  trenKits?: SubCategory[];
 };
 
-export default function CatalogSidebar({ categories, brands }: Props) {
+export default function CatalogSidebar({ categories, brands, motorKits = [], trenKits = [] }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -19,6 +21,8 @@ export default function CatalogSidebar({ categories, brands }: Props) {
 
   const activeCategory = searchParams.get("categoria");
   const activeBrand = searchParams.get("marca");
+  const activeMotor = searchParams.get("motor");
+  const activeTren = searchParams.get("tren");
   const activeSort = searchParams.get("sort");
   const searchQuery = searchParams.get("q");
 
@@ -70,7 +74,7 @@ export default function CatalogSidebar({ categories, brands }: Props) {
       {/* Bloque Categorías */}
       <div>
         <h4 className="font-bold text-slate-800 mb-4 px-1 uppercase tracking-wider text-xs">Categorías</h4>
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin">
           {categories.map((cat) => {
             const isActive = activeCategory === cat.name;
             return (
@@ -84,12 +88,79 @@ export default function CatalogSidebar({ categories, brands }: Props) {
                 <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-primary border-primary" : "border-slate-300 bg-white"}`}>
                   {isActive && <Check className="w-3 h-3 text-white" />}
                 </div>
-                <span className="text-sm truncate leading-none">{cat.name}</span>
+                <span className="text-sm truncate leading-none flex-1">{cat.name}</span>
+                {typeof cat.count === "number" && (
+                  <span className={`text-xs font-mono px-2 py-0.5 rounded-full shrink-0 ${isActive ? "bg-primary text-white font-bold" : "bg-slate-100 text-slate-500 font-semibold"}`}>
+                    {cat.count}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
       </div>
+
+      {/* Bloque Motores */}
+      {motorKits && motorKits.length > 0 && (
+        <div>
+          <h4 className="font-bold text-slate-800 mb-4 px-1 uppercase tracking-wider text-xs">Motor</h4>
+          <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin">
+            {motorKits.map((kit) => {
+              const isActive = activeMotor === kit.name || activeMotor === kit.id;
+              return (
+                <button
+                  key={kit.id}
+                  onClick={() => handleAction("motor", kit.name, isActive)}
+                  className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                    isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-primary border-primary" : "border-slate-300 bg-white"}`}>
+                    {isActive && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="text-sm truncate leading-none flex-1" title={kit.name}>{kit.name}</span>
+                  {typeof kit.count === "number" && (
+                    <span className={`text-xs font-mono px-2 py-0.5 rounded-full shrink-0 ${isActive ? "bg-primary text-white font-bold" : "bg-slate-100 text-slate-500 font-semibold"}`}>
+                      {kit.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Bloque Tren Delantero */}
+      {trenKits && trenKits.length > 0 && (
+        <div>
+          <h4 className="font-bold text-slate-800 mb-4 px-1 uppercase tracking-wider text-xs">Tren Delantero</h4>
+          <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin">
+            {trenKits.map((kit) => {
+              const isActive = activeTren === kit.name || activeTren === kit.id;
+              return (
+                <button
+                  key={kit.id}
+                  onClick={() => handleAction("tren", kit.name, isActive)}
+                  className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                    isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-primary border-primary" : "border-slate-300 bg-white"}`}>
+                    {isActive && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="text-sm truncate leading-none flex-1" title={kit.name}>{kit.name}</span>
+                  {typeof kit.count === "number" && (
+                    <span className={`text-xs font-mono px-2 py-0.5 rounded-full shrink-0 ${isActive ? "bg-primary text-white font-bold" : "bg-slate-100 text-slate-500 font-semibold"}`}>
+                      {kit.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Bloque Marcas */}
       <div>
@@ -108,7 +179,12 @@ export default function CatalogSidebar({ categories, brands }: Props) {
                 <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-primary border-primary" : "border-slate-300 bg-white"}`}>
                   {isActive && <Check className="w-3 h-3 text-white" />}
                 </div>
-                <span className="text-sm truncate leading-none uppercase">{brand.name}</span>
+                <span className="text-sm truncate leading-none uppercase flex-1">{brand.name}</span>
+                {typeof brand.count === "number" && (
+                  <span className={`text-xs font-mono px-2 py-0.5 rounded-full shrink-0 ${isActive ? "bg-primary text-white font-bold" : "bg-slate-100 text-slate-500 font-semibold"}`}>
+                    {brand.count}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -116,7 +192,7 @@ export default function CatalogSidebar({ categories, brands }: Props) {
       </div>
       
       {/* Limpieza Global */}
-      {(activeCategory || activeBrand || activeSort) && (
+      {(activeCategory || activeBrand || activeMotor || activeTren || activeSort) && (
         <button
           onClick={() => {
             router.push(pathname + (searchQuery ? `?q=${searchQuery}` : ""));
@@ -140,9 +216,9 @@ export default function CatalogSidebar({ categories, brands }: Props) {
         >
           <Filter className="w-4 h-4" /> 
           <span>Filtrar</span>
-          {(activeBrand || activeCategory) && (
+          {(activeBrand || activeCategory || activeMotor || activeTren) && (
              <span className="bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center text-xs ml-1 font-bold">
-               {(activeBrand ? 1 : 0) + (activeCategory ? 1 : 0)}
+               {(activeBrand ? 1 : 0) + (activeCategory ? 1 : 0) + (activeMotor ? 1 : 0) + (activeTren ? 1 : 0)}
              </span>
           )}
         </button>

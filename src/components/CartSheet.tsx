@@ -10,6 +10,7 @@ import { useState, useRef, useCallback } from "react";
 export function CartSheet({ children }: { children: React.ReactNode }) {
   const { items, removeItem, updateQuantity, getCartTotal, getCartItemsCount } = useCartStore();
   const bcvRate = useBcvStore((state) => state.rate);
+  const bcvMultiplier = useBcvStore((state) => state.multiplier || 1.6);
   const [open, setOpen] = useState(false);
 
   // Swipe-to-dismiss state
@@ -57,7 +58,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     message += "🛒 *DETALLE DE COMPRA*\n──────────────────\n";
 
     items.forEach((item) => {
-      let calcBcv = item.product.price * 1.6;
+      let calcBcv = item.product.price * bcvMultiplier;
       let efec = (item.product.price * item.quantity).toFixed(2);
       let pto = (calcBcv * item.quantity).toFixed(2);
       
@@ -84,7 +85,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
   };
 
   const getSubtotalEfectivo = () => getCartTotal();
-  const getSubtotalBcvUsd = () => getCartTotal() * 1.6;
+  const getSubtotalBcvUsd = () => getCartTotal() * bcvMultiplier;
   const savings = getSubtotalBcvUsd() - getSubtotalEfectivo();
 
   return (
@@ -176,7 +177,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         ${(item.product.price * item.quantity).toFixed(2)}
                       </span>
                       <span className="text-[10px] text-slate-400 line-through">
-                        ${(item.product.price * 1.6 * item.quantity).toFixed(2)}
+                        ${(item.product.price * bcvMultiplier * item.quantity).toFixed(2)}
                       </span>
                     </div>
                     

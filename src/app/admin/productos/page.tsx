@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { useBcvStore } from "@/lib/store/bcvStore";
 import { Plus, Pencil, Trash2, Upload, Loader2, ChevronLeft, ChevronRight, FileText, Search, X as XIcon, Copy, ClipboardList, Download, ArrowUpDown, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -78,6 +79,7 @@ interface Product {
 
 export default function ProductsAdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const bcvMultiplier = useBcvStore((state) => state.multiplier || 1.6);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -778,8 +780,8 @@ export default function ProductsAdminPage() {
                                 <span className="text-green-600 font-bold">${parseFloat(formData.price || "0").toFixed(2)}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Tasa BCV (x1.6):</span>
-                                <span className="text-primary font-bold">${(parseFloat(formData.price || "0") * 1.6).toFixed(2)}</span>
+                                <span>Tasa BCV (x{bcvMultiplier}):</span>
+                                <span className="text-primary font-bold">${(parseFloat(formData.price || "0") * bcvMultiplier).toFixed(2)}</span>
                               </div>
                             </div>
                           </div>

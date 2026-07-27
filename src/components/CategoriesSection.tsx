@@ -15,7 +15,7 @@ const CategoriesSection = async () => {
             return (
               <a
                 key={cat.id}
-                href={`/catalogo?q=${encodeURIComponent(cat.name)}`}
+                href={`/catalogo?categoria=${encodeURIComponent(cat.name)}`}
                 className="group flex flex-col items-center gap-2 rounded-lg border-2 border-border bg-card p-4 transition-all hover:border-primary hover:shadow-md md:gap-3 md:p-6"
               >
                 <div className="scale-75 text-muted-foreground transition-colors group-hover:text-primary md:scale-100">

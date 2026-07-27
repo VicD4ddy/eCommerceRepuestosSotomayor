@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { LayoutDashboard, Package, Tags, Tag, ArrowLeft, LogOut, Loader2, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DailyBcvDialog } from "@/components/admin/DailyBcvDialog";
 
 const adminNav = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -155,6 +156,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 overflow-x-hidden bg-muted/30">
         {children}
       </main>
+      <DailyBcvDialog />
     </div>
   );
 }

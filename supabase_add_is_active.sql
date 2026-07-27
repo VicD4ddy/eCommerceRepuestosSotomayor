@@ -1,19 +1,21 @@
 -- ============================================================
--- SMART SEARCH - Repuestos Sotomayor
--- Ejecuta este script UNA SOLA VEZ en el SQL Editor de Supabase
--- Dashboard > SQL Editor > New Query > Pegar y ejecutar
+-- CONFIGURACIÓN DE ACTIVACIÓN/DESACTIVACIÓN DE PRODUCTOS Y BÚSQUEDA
+-- Ejecuta todo este script en Supabase SQL Editor
 -- ============================================================
 
--- 1. Habilitar extensiones necesarias
+-- 1. Asegurar que los productos existentes tengan is_active en true si estaban en NULL
+UPDATE products
+SET is_active = true
+WHERE is_active IS NULL;
+
+-- 2. Crear índice para búsquedas ultra-rápidas por estado activo/inactivo
+CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active);
+
+-- 3. Habilitar extensiones necesarias por si no estaban habilitadas
 CREATE EXTENSION IF NOT EXISTS unaccent;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- 2. Asegurar columna is_active e índice
-ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true;
-UPDATE products SET is_active = true WHERE is_active IS NULL;
-CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active);
-
--- 3. Función de búsqueda inteligente (accent-insensitive + fuzzy)
+-- 4. Actualizar la función search_products (para SmartSearchBar) con los campos reales (price_usd, code, logo_url) e is_active
 DROP FUNCTION IF EXISTS search_products(text, integer);
 CREATE OR REPLACE FUNCTION search_products(
   search_term text,
@@ -77,7 +79,7 @@ BEGIN
 END;
 $$;
 
--- 4. Función para búsqueda paginada del catálogo (accent-insensitive)
+-- 5. Actualizar la función catalog_search (para el Catálogo) con campos reales (price_usd, code, logo_url) e is_active
 DROP FUNCTION IF EXISTS catalog_search(text,text,text,text,integer,integer);
 CREATE OR REPLACE FUNCTION catalog_search(
   search_term text DEFAULT '',

@@ -10,6 +10,7 @@ import {
   clearRecentSearches,
   stripAccents,
 } from "@/lib/searchUtils";
+import { useBcvStore } from "@/lib/store/bcvStore";
 
 interface SearchResult {
   id: string;
@@ -31,6 +32,7 @@ export default function SmartSearchBar({
   onNavigate,
 }: SmartSearchBarProps) {
   const router = useRouter();
+  const bcvMultiplier = useBcvStore((state) => state.multiplier || 1.6);
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -84,9 +86,10 @@ export default function SmartSearchBar({
         const normalized = stripAccents(term.toLowerCase());
         const { data: fallbackData } = await supabase
           .from("products")
-          .select("id, name, price, image_url, brands(name), categories(name)")
+          .select("id, name, price:price_usd, image_url, code, brands(name), categories(name)")
+          .or("is_active.eq.true,is_active.is.null")
           .or(
-            `name.ilike.%${term}%,name.ilike.%${normalized}%,code_1.ilike.%${term}%,code_2.ilike.%${term}%`
+            `name.ilike.%${term}%,name.ilike.%${normalized}%,code.ilike.%${term}%`
           )
           .limit(6);
 
@@ -323,7 +326,7 @@ export default function SmartSearchBar({
 
                       {/* Price */}
                       <span className="text-sm font-black text-primary shrink-0">
-                        ${(product.price * 1.6).toLocaleString("es-VE", {
+                        ${(product.price * bcvMultiplier).toLocaleString("es-VE", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}

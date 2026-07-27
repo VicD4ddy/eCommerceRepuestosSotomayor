@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
+import VehicleSelectorWidget from "@/components/VehicleSelectorWidget";
 import BrandsCarousel from "@/components/BrandsCarousel";
 import BenefitsSection from "@/components/BenefitsSection";
 import HowToBuySteps from "@/components/HowToBuySteps";
@@ -20,6 +21,7 @@ const Index = async () => {
       <main className="flex-1">
         <PartsBrandsRibbon />
         <HeroSection />
+        <VehicleSelectorWidget />
         <BrandsCarousel />
         <BenefitsSection />
         <HowToBuySteps />
