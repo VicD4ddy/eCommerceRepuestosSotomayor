@@ -63,7 +63,10 @@ export default function BrandsAdminPage() {
       setLoading(false);
       return;
     }
-    const list = data || [];
+    const list = (data || []).map((b: any) => ({
+      ...b,
+      image_url: b.logo_url || b.image_url,
+    }));
     const countsPromises = list.map(async (b: Brand) => {
       const { count } = await supabase
         .from("products")
@@ -91,14 +94,14 @@ export default function BrandsAdminPage() {
       if (formData.id) {
         const { error } = await supabase
           .from("brands")
-          .update({ name: formData.name, image_url: formData.image_url || null })
+          .update({ name: formData.name, logo_url: formData.image_url || null })
           .eq("id", formData.id);
         if (error) throw error;
         toast.success("Marca modificada con éxito");
       } else {
         const { error } = await supabase
           .from("brands")
-          .insert([{ name: formData.name, image_url: formData.image_url || null }]);
+          .insert([{ name: formData.name, logo_url: formData.image_url || null }]);
         if (error) throw error;
         toast.success("Marca creada con éxito");
       }

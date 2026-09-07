@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Link, ShoppingCart, ArrowLeft, Share2 } from "lucide-react";
+import { Link, ShoppingCart, ArrowLeft, Share2, Zap } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useBcvStore } from "@/lib/store/bcvStore";
 import { toast } from "sonner";
 import NextLink from "next/link";
+import { CheckoutDialog } from "@/components/checkout/CheckoutDialog";
 
 interface ProductViewProps {
   product: {
@@ -28,6 +29,7 @@ export default function ProductView({ product }: ProductViewProps) {
   const safeImage2 = (product.image_2 && typeof product.image_2 === "string" && product.image_2.trim() !== "") ? product.image_2 : null;
 
   const [activeImage, setActiveImage] = useState(safeImage);
+  const [buyNowOpen, setBuyNowOpen] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const bcvRate = useBcvStore((state) => state.rate);
   const bcvMultiplier = useBcvStore((state) => state.multiplier || 1.6);
@@ -160,16 +162,44 @@ export default function ProductView({ product }: ProductViewProps) {
                </div>
              </div>
 
-             <button 
-               onClick={handleAddToCart}
-               className="w-full flex justify-center items-center gap-2 rounded-lg bg-primary py-4 font-display text-sm md:text-base font-bold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90 shadow-md hover:shadow-lg hover:-translate-y-0.5"
-             >
-               <ShoppingCart size={22} />
-               Añadir al Carrito de Cotización
-             </button>
+             <div className="flex flex-col gap-3">
+               <button 
+                 onClick={() => setBuyNowOpen(true)}
+                 className="w-full flex justify-center items-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#1ebe5a] active:scale-[0.98] py-4 font-display text-sm md:text-base font-bold uppercase tracking-wider text-white transition-all shadow-md hover:shadow-lg hover:shadow-green-500/20"
+               >
+                 <Zap size={20} strokeWidth={2.5} />
+                 ⚡ Comprar Ahora (1-Click)
+               </button>
+
+               <button 
+                 onClick={handleAddToCart}
+                 className="w-full flex justify-center items-center gap-2 rounded-xl border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary py-3.5 font-display text-sm md:text-base font-bold uppercase tracking-wide transition-all"
+               >
+                 <ShoppingCart size={20} />
+                 Añadir al Carrito
+               </button>
+             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal de Compra 1-Click */}
+      <CheckoutDialog
+        open={buyNowOpen}
+        onOpenChange={setBuyNowOpen}
+        customItems={[
+          {
+            product: {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              image: safeImage,
+              category: product.categories?.name || "General",
+            },
+            quantity: 1,
+          },
+        ]}
+      />
     </div>
   );
 }

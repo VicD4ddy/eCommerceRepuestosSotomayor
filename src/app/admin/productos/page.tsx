@@ -117,7 +117,7 @@ export default function ProductsAdminPage() {
     const to = from + itemsPerPage - 1;
 
     let query = supabase.from("products")
-      .select("*, categories:category_id (name), brands:brand_id (name, image_url)", { count: "exact" })
+      .select("*, categories:category_id (name), brands:brand_id (name, image_url:logo_url)", { count: "exact" })
       .order(sortConfig.key, { ascending: sortConfig.direction === 'asc' });
 
     if (searchTerm) {

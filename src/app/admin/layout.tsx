@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { LayoutDashboard, Package, Tags, Tag, ArrowLeft, LogOut, Loader2, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, Tags, Tag, ArrowLeft, LogOut, Loader2, Menu, X, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DailyBcvDialog } from "@/components/admin/DailyBcvDialog";
 
 const adminNav = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Pedidos", href: "/admin/pedidos", icon: ClipboardList },
   { name: "Productos", href: "/admin/productos", icon: Package },
   { name: "Categorías", href: "/admin/categorias", icon: Tags },
   { name: "Marcas", href: "/admin/marcas", icon: Tag },

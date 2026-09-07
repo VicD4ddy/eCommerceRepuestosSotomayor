@@ -25,7 +25,7 @@ export default function HowToBuySteps() {
             </div>
             <h3 className="text-xl font-bold mb-3 tracking-wide">1. Busca tu repuesto</h3>
             <p className="text-slate-400 text-sm max-w-[260px] leading-relaxed">
-              Explora el catálogo o usa la barra inteligente de la cima para buscar rápidamente por vehículo y OEM.
+              Explora el catálogo o usa el buscador inteligente por marca, motor, modelo y código OEM.
             </p>
           </div>
 
@@ -33,9 +33,9 @@ export default function HowToBuySteps() {
             <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center border-8 border-slate-900 shadow-xl mb-6 shadow-primary/10">
               <ShoppingCart className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-xl font-bold mb-3 tracking-wide">2. Arma tu carrito</h3>
+            <h3 className="text-xl font-bold mb-3 tracking-wide">2. Checkout Express</h3>
             <p className="text-slate-400 text-sm max-w-[260px] leading-relaxed">
-              Crea tu listado de mercado de repuestos. Nuestro sistema tasará todo en USD e inyectará la tasa BCV del día.
+              Indica tu vehículo, selecciona retiro en tienda o encomienda, y elige pago en Divisas ($) o Tasa BCV (Bs.).
             </p>
           </div>
 
@@ -43,9 +43,9 @@ export default function HowToBuySteps() {
             <div className="w-24 h-24 bg-whatsapp/20 rounded-full flex items-center justify-center border-8 border-slate-900 shadow-xl mb-6 shadow-whatsapp/10">
               <MessageCircleMore className="h-10 w-10 text-whatsapp" />
             </div>
-            <h3 className="text-xl font-bold mb-3 tracking-wide">3. Cierra vía WhatsApp</h3>
+            <h3 className="text-xl font-bold mb-3 tracking-wide">3. Despacho y Recibo</h3>
             <p className="text-slate-400 text-sm max-w-[260px] leading-relaxed">
-              Presiona Finalizar. Nosotros recibimos tu cotización estructurada al instante y te indicamos cuándo buscar la caja.
+              Recibes tu número de orden #SM, datos bancarios con copia rápida y confirmación directa en WhatsApp.
             </p>
           </div>
         </div>

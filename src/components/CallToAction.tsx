@@ -16,7 +16,7 @@ export default function CallToAction() {
         </p>
 
         <a 
-          href="https://api.whatsapp.com/send?phone=584120000000&text=Hola%21%20Necesito%20ayuda%20para%20ubicar%20un%20repuesto%20exacto." 
+          href="https://api.whatsapp.com/send?phone=584124236129&text=Hola%21%20Necesito%20ayuda%20para%20ubicar%20un%20repuesto%20exacto." 
           target="_blank" 
           rel="noopener noreferrer"
           className="group relative inline-flex items-center gap-3 bg-whatsapp text-white px-8 py-4 md:px-10 md:py-5 rounded-full font-black text-lg md:text-xl shadow-[0_15px_40px_-10px_rgba(37,211,102,0.5)] hover:scale-105 hover:shadow-[0_20px_50px_-10px_rgba(37,211,102,0.6)] transition-all duration-300"
