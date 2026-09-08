@@ -11,7 +11,11 @@ interface KitItem {
   category: string;
 }
 
-export default function VehicleSelectorWidget() {
+interface VehicleSelectorWidgetProps {
+  className?: string;
+}
+
+export default function VehicleSelectorWidget({ className }: VehicleSelectorWidgetProps = {}) {
   const router = useRouter();
   const [kits, setKits] = useState<KitItem[]>([]);
   const [selectedSystem, setSelectedSystem] = useState<string>("");
@@ -52,7 +56,7 @@ export default function VehicleSelectorWidget() {
   };
 
   return (
-    <section className="relative z-20 -mt-8 md:-mt-12 container mx-auto px-4 mb-10">
+    <section className={`relative z-20 container mx-auto px-4 ${className !== undefined ? className : "-mt-8 md:-mt-12 mb-10"}`}>
       <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-xl dark:shadow-2xl dark:border-border/80 backdrop-blur-md bg-white/95 dark:bg-slate-900/95">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-border pb-4">
           <div className="flex items-center gap-3">

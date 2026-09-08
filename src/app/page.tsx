@@ -20,8 +20,9 @@ const Index = async () => {
       <Header />
       <main className="flex-1">
         <PartsBrandsRibbon />
-        <HeroSection />
-        <VehicleSelectorWidget />
+        <HeroSection>
+          <VehicleSelectorWidget className="pb-2 md:pb-4" />
+        </HeroSection>
         <BrandsCarousel />
         <BenefitsSection />
         <HowToBuySteps />
