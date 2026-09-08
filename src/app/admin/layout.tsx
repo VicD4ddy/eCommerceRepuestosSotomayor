@@ -30,13 +30,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session) {
+          if (error) {
+            await supabase.auth.signOut().catch(() => {});
+          }
+          router.push("/admin/login");
+        } else {
+          setIsAuthenticated(true);
+        }
+      } catch (err) {
+        await supabase.auth.signOut().catch(() => {});
         router.push("/admin/login");
-      } else {
-        setIsAuthenticated(true);
+      } finally {
+        setIsVerifying(false);
       }
-      setIsVerifying(false);
     };
 
     checkAuth();
